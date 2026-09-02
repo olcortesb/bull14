@@ -9,7 +9,14 @@
       <router-link to="/changelog" class="text-sm text-gray-400 hover:text-white transition-colors">Changelog</router-link>
       <router-link to="/analytics" class="text-sm text-gray-400 hover:text-white transition-colors">Analytics</router-link>
       <router-link to="/metrics" class="text-sm text-gray-400 hover:text-white transition-colors">Metrics</router-link>
+      <div class="ml-auto">
+        <GlobalSearch />
+      </div>
     </nav>
     <router-view />
   </div>
 </template>
+
+<script setup>
+import GlobalSearch from './components/GlobalSearch.vue'
+</script>
