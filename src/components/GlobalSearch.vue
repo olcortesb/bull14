@@ -106,7 +106,8 @@ async function buildIndex() {
         items.push({
           type: 'model', id: m.id, name: m.name,
           subtitle: `${m.provider} · ${m.access} · ${m.modalities?.join(', ')}`,
-          route: '/models', keywords: [m.id, m.name, m.provider, m.license, ...(m.modalities ?? [])],
+          route: '/models',
+          keywords: [m.id, m.name, m.provider, m.license, ...(m.modalities ?? [])].join(' '),
         })
       }
     }
@@ -118,7 +119,8 @@ async function buildIndex() {
           items.push({
             type: 'pricing', id: `${p.id}/${m.id}`, name: m.id,
             subtitle: `${p.id} · $${m.pricing?.standard?.input_per_1m ?? '?'}/1M in`,
-            route: '/pricing', keywords: [m.id, p.id],
+            route: '/pricing',
+            keywords: [m.id, p.id].join(' '),
           })
         }
       }
@@ -129,7 +131,8 @@ async function buildIndex() {
         items.push({
           type: 'tool', id: t.id, name: t.name,
           subtitle: `${t.category} · v${t.version ?? '?'} · ${t.activity ?? ''}`,
-          route: '/tools', keywords: [t.id, t.name, t.category, t.description, t.license],
+          route: '/tools',
+          keywords: [t.id, t.name, t.category, t.description, t.license].filter(Boolean).join(' '),
         })
       }
     }
@@ -140,7 +143,8 @@ async function buildIndex() {
           items.push({
             type: 'gpu', id: `${pid}/${g.gpu_type}`, name: g.gpu_type,
             subtitle: `${p.name} · $${g.price_per_hour}/hr · ${g.vram_gb}GB VRAM`,
-            route: '/hardware', keywords: [g.gpu_type, p.name, pid, p.category],
+            route: '/hardware',
+            keywords: [g.gpu_type, p.name, pid, p.category].join(' '),
           })
         }
       }
@@ -148,9 +152,11 @@ async function buildIndex() {
 
     searchIndex.value = items
     fuse = new Fuse(items, {
-      keys: ['name', 'keywords', 'subtitle'],
-      threshold: 0.3,
+      keys: ['name', 'subtitle', 'keywords'],
+      threshold: 0.4,
       minMatchCharLength: 2,
+      ignoreLocation: true,
+      useExtendedSearch: false,
     })
   } catch (e) {
     console.error('Search index build failed:', e)
