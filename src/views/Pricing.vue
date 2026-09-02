@@ -197,7 +197,7 @@ const filteredModels = computed(() => {
 function fmt(val) {
   if (val == null) return '—'
   if (val === 0) return 'free'
-  return `$${val}`
+  return `$${val.toFixed(4)}`
 }
 
 function priceColor(val) {

@@ -87,7 +87,7 @@
                   </span>
                 </div>
               </td>
-              <td class="py-3 pr-4 text-gray-400 text-xs">{{ m.license }}</td>
+              <td class="py-3 pr-4 text-gray-400 text-xs">{{ formatLicense(m.license) }}</td>
               <td class="py-3 pr-4 text-gray-400">{{ m.hf_downloads != null ? formatNum(m.hf_downloads) : '—' }}</td>
               <td class="py-3">
                 <span :class="statusClass(m.status)" class="px-2 py-0.5 rounded text-xs font-medium">
@@ -244,6 +244,15 @@ function accessClass(access) {
     'open-weight': 'bg-green-900/50 text-green-300',
     'both':        'bg-blue-900/50 text-blue-300',
   }[access] ?? 'bg-gray-800 text-gray-300'
+}
+
+function formatLicense(l) {
+  const map = {
+    'llama3': 'Llama 3.1', 'apache-2.0': 'Apache-2.0',
+    'mit': 'MIT', 'qwen': 'Qwen', 'gemma': 'Gemma',
+    'proprietary': 'Proprietary',
+  }
+  return map[l] ?? l
 }
 
 function statusClass(status) {
