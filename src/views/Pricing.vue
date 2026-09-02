@@ -112,33 +112,13 @@ import HelpPanel from '../components/HelpPanel.vue'
 const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
 
 const HELP_FIELDS = [
-  {
-    name: 'Model',
-    description: 'Model identifier as used in the provider API. Includes variant suffixes like :free, :nitro, :extended.',
-  },
-  {
-    name: 'Provider',
-    description: 'API provider serving the model. May differ from the model creator (e.g. Groq serves Meta\'s Llama models).',
-  },
-  {
-    name: 'Input /1M',
-    description: 'Cost per 1 million input (prompt) tokens in USD. This is what you pay for the text you send to the model.',
-  },
-  {
-    name: 'Output /1M',
-    description: 'Cost per 1 million output (completion) tokens in USD. Typically 3–10x more expensive than input.',
-  },
-  {
-    name: 'Cached /1M',
-    description: 'Discounted input price when using prompt caching. Repeated prefixes are cached server-side. Typically 75–90% cheaper than standard input.',
-  },
-  {
-    name: 'Batch Input /1M',
-    description: 'Discounted price for asynchronous batch processing. Requests are queued and processed within 24h. Typically 50% cheaper than standard.',
-  },
+  { name: 'Model', description: 'Model identifier as used in the provider API. Includes variant suffixes like :free, :nitro, :extended.' },
+  { name: 'Provider', description: "API provider serving the model. May differ from the model creator (e.g. Groq serves Meta's Llama models)." },
+  { name: 'Input /1M', description: 'Cost per 1 million input (prompt) tokens in USD. This is what you pay for the text you send to the model.' },
+  { name: 'Output /1M', description: 'Cost per 1 million output (completion) tokens in USD. Typically 3–10x more expensive than input.' },
+  { name: 'Cached /1M', description: 'Discounted input price when using prompt caching. Repeated prefixes are cached server-side. Typically 75–90% cheaper than standard input.' },
+  { name: 'Batch Input /1M', description: 'Discounted price for asynchronous batch processing. Requests are queued and processed within 24h. Typically 50% cheaper than standard.' },
 ]
-
-const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
 
 const allModels = ref([])
 const loading = ref(true)
