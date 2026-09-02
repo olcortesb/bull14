@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-950 text-gray-100">
+  <div class="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
     <nav class="border-b border-gray-800 px-6 py-3 flex items-center gap-6">
       <router-link to="/" class="font-bold text-white tracking-tight">bull14</router-link>
       <router-link to="/models" class="text-sm text-gray-400 hover:text-white transition-colors">Models</router-link>
@@ -13,7 +13,19 @@
         <GlobalSearch />
       </div>
     </nav>
-    <router-view />
+    <main class="flex-1">
+      <router-view />
+    </main>
+    <footer class="border-t border-gray-800 mt-8">
+      <div class="px-6 py-4 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
+        <span>Built by <a href="https://linkedin.com/in/olcortesb" target="_blank" class="hover:text-white transition-colors">olcortesb</a></span>
+        <span>🔄 Updated daily</span>
+        <a href="https://github.com/olcortesb/bull14" target="_blank" class="hover:text-white transition-colors">GitHub</a>
+      </div>
+      <div class="px-6 pb-3 text-center text-xs text-gray-600">
+        This site does not collect personal data or use cookies.
+      </div>
+    </footer>
   </div>
 </template>
 

@@ -16,6 +16,28 @@
     <div v-else-if="error" class="text-red-400 text-sm">{{ error }}</div>
 
     <template v-else>
+      <!-- Calculator -->
+      <div class="mb-5 p-4 bg-gray-900 rounded-lg border border-gray-800">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xs font-medium text-gray-300">Token calculator</span>
+          <span class="text-xs text-gray-600">— enter your monthly usage to see estimated cost per model</span>
+        </div>
+        <div class="flex flex-wrap gap-4 items-end">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Input tokens / month</label>
+            <input v-model.number="calcInput" type="number" min="0" placeholder="e.g. 1000000"
+              class="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white w-44 focus:outline-none focus:border-gray-500" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Output tokens / month</label>
+            <input v-model.number="calcOutput" type="number" min="0" placeholder="e.g. 200000"
+              class="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white w-44 focus:outline-none focus:border-gray-500" />
+          </div>
+          <button v-if="calcInput || calcOutput" @click="calcInput = null; calcOutput = null"
+            class="text-xs text-gray-500 hover:text-white transition-colors pb-1.5">Clear</button>
+        </div>
+      </div>
+
       <!-- Filters -->
       <div class="mb-4 flex flex-wrap gap-3 items-center">
         <!-- Provider filter -->
@@ -49,7 +71,7 @@
 
         <!-- Sort -->
         <div class="flex gap-1.5">
-          <button v-for="s in sortOptions" :key="s.key"
+          <button v-for="s in activeSortOptions" :key="s.key"
             @click="sortBy = s.key"
             :class="sortBy === s.key ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
             class="px-2.5 py-1 rounded text-xs font-medium transition-colors"
@@ -69,7 +91,8 @@
               <th class="pb-3 pr-4 text-right">Input /1M</th>
               <th class="pb-3 pr-4 text-right">Output /1M</th>
               <th class="pb-3 pr-4 text-right">Cached /1M</th>
-              <th class="pb-3 text-right">Batch Input /1M</th>
+              <th class="pb-3 text-right" :class="calcActive ? 'pr-4' : ''">Batch Input /1M</th>
+              <th v-if="calcActive" class="pb-3 text-right text-yellow-400">Est. cost/mo</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-800/50">
@@ -94,8 +117,11 @@
               <td class="py-2.5 pr-4 text-right font-mono text-gray-500">
                 {{ fmt(m.pricing.cached_input_per_1m) }}
               </td>
-              <td class="py-2.5 text-right font-mono text-gray-500">
+              <td class="py-2.5 font-mono text-gray-500" :class="calcActive ? 'pr-4 text-right' : 'text-right'">
                 {{ fmt(m.pricing.batch?.input_per_1m) }}
+              </td>
+              <td v-if="calcActive" class="py-2.5 text-right font-mono font-medium">
+                <span :class="costColor(estimatedCost(m))">{{ fmtCost(estimatedCost(m)) }}</span>
               </td>
             </tr>
           </tbody>
@@ -136,12 +162,20 @@ const priceTypes = [
   { key: 'batch',  label: 'Has Batch' },
 ]
 
+const calcInput = ref(null)
+const calcOutput = ref(null)
+const calcActive = computed(() => calcInput.value > 0 || calcOutput.value > 0)
+
 const sortBy = ref('input')
 const sortOptions = [
   { key: 'input',    label: 'Input ↑' },
   { key: 'output',   label: 'Output ↑' },
+  { key: 'cost',     label: 'Cost ↑' },
   { key: 'name',     label: 'Name' },
 ]
+const activeSortOptions = computed(() =>
+  sortOptions.filter(s => s.key !== 'cost' || calcActive.value)
+)
 
 onMounted(async () => {
   try {
@@ -182,12 +216,9 @@ const filteredModels = computed(() => {
   }
 
   list = [...list].sort((a, b) => {
-    if (sortBy.value === 'input') {
-      return (a.pricing.standard.input_per_1m ?? Infinity) - (b.pricing.standard.input_per_1m ?? Infinity)
-    }
-    if (sortBy.value === 'output') {
-      return (a.pricing.standard.output_per_1m ?? Infinity) - (b.pricing.standard.output_per_1m ?? Infinity)
-    }
+    if (sortBy.value === 'input') return (a.pricing.standard.input_per_1m ?? Infinity) - (b.pricing.standard.input_per_1m ?? Infinity)
+    if (sortBy.value === 'output') return (a.pricing.standard.output_per_1m ?? Infinity) - (b.pricing.standard.output_per_1m ?? Infinity)
+    if (sortBy.value === 'cost') return estimatedCost(a) - estimatedCost(b)
     return a.id.localeCompare(b.id)
   })
 
@@ -198,6 +229,26 @@ function fmt(val) {
   if (val == null) return '—'
   if (val === 0) return 'free'
   return `$${val.toFixed(4)}`
+}
+
+function estimatedCost(m) {
+  const inp = (calcInput.value ?? 0) / 1_000_000 * (m.pricing.standard.input_per_1m ?? 0)
+  const out = (calcOutput.value ?? 0) / 1_000_000 * (m.pricing.standard.output_per_1m ?? 0)
+  return inp + out
+}
+
+function fmtCost(val) {
+  if (val === 0) return 'free'
+  if (val < 0.01) return `$${val.toFixed(4)}`
+  if (val < 1) return `$${val.toFixed(3)}`
+  return `$${val.toFixed(2)}`
+}
+
+function costColor(val) {
+  if (val === 0) return 'text-green-400'
+  if (val < 1) return 'text-green-300'
+  if (val < 10) return 'text-yellow-300'
+  return 'text-red-300'
 }
 
 function priceColor(val) {
