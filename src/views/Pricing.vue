@@ -81,6 +81,13 @@
         </div>
       </div>
 
+      <!-- Group by family toggle -->
+      <div class="mb-3 flex items-center gap-2">
+        <button @click="groupByFamily = !groupByFamily"
+          :class="groupByFamily ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
+          class="px-2.5 py-1 rounded text-xs font-medium transition-colors">Group by family</button>
+      </div>
+
       <!-- Table -->
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
@@ -95,35 +102,37 @@
               <th v-if="calcActive" class="pb-3 text-right text-yellow-400">Est. cost/mo</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-800/50">
-            <tr v-for="m in filteredModels" :key="`${m.provider}-${m.id}`"
-              class="hover:bg-gray-900/50 transition-colors">
-              <td class="py-2.5 pr-4">
-                <span class="text-white">{{ m.id }}</span>
-              </td>
-              <td class="py-2.5 pr-4">
-                <span class="text-xs text-gray-400">{{ m.provider }}</span>
-              </td>
-              <td class="py-2.5 pr-4 text-right font-mono">
-                <span :class="priceColor(m.pricing.standard.input_per_1m)">
-                  {{ fmt(m.pricing.standard.input_per_1m) }}
-                </span>
-              </td>
-              <td class="py-2.5 pr-4 text-right font-mono">
-                <span :class="priceColor(m.pricing.standard.output_per_1m)">
-                  {{ fmt(m.pricing.standard.output_per_1m) }}
-                </span>
-              </td>
-              <td class="py-2.5 pr-4 text-right font-mono text-gray-500">
-                {{ fmt(m.pricing.cached_input_per_1m) }}
-              </td>
-              <td class="py-2.5 font-mono text-gray-500" :class="calcActive ? 'pr-4 text-right' : 'text-right'">
-                {{ fmt(m.pricing.batch?.input_per_1m) }}
-              </td>
-              <td v-if="calcActive" class="py-2.5 text-right font-mono font-medium">
-                <span :class="costColor(estimatedCost(m))">{{ fmtCost(estimatedCost(m)) }}</span>
-              </td>
-            </tr>
+          <tbody>
+            <template v-if="groupByFamily">
+              <template v-for="(group, family) in groupedModels" :key="family">
+                <tr class="border-t border-gray-700">
+                  <td colspan="7" class="pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    {{ family }}
+                    <span class="ml-2 text-gray-600 font-normal normal-case">{{ group.length }} models</span>
+                  </td>
+                </tr>
+                <tr v-for="m in group" :key="`${m.provider}-${m.id}`" class="hover:bg-gray-900/50 transition-colors">
+                  <td class="py-2 pr-4 pl-3 text-white">{{ m.id }}</td>
+                  <td class="py-2 pr-4 text-xs text-gray-400">{{ m.provider }}</td>
+                  <td class="py-2 pr-4 text-right font-mono"><span :class="priceColor(m.pricing.standard.input_per_1m)">{{ fmt(m.pricing.standard.input_per_1m) }}</span></td>
+                  <td class="py-2 pr-4 text-right font-mono"><span :class="priceColor(m.pricing.standard.output_per_1m)">{{ fmt(m.pricing.standard.output_per_1m) }}</span></td>
+                  <td class="py-2 pr-4 text-right font-mono text-gray-500">{{ fmt(m.pricing.cached_input_per_1m) }}</td>
+                  <td class="py-2 font-mono text-gray-500" :class="calcActive ? 'pr-4 text-right' : 'text-right'">{{ fmt(m.pricing.batch?.input_per_1m) }}</td>
+                  <td v-if="calcActive" class="py-2 text-right font-mono font-medium"><span :class="costColor(estimatedCost(m))">{{ fmtCost(estimatedCost(m)) }}</span></td>
+                </tr>
+              </template>
+            </template>
+            <template v-else>
+              <tr v-for="m in filteredModels" :key="`${m.provider}-${m.id}`" class="hover:bg-gray-900/50 transition-colors border-b border-gray-800/50">
+                <td class="py-2.5 pr-4 text-white">{{ m.id }}</td>
+                <td class="py-2.5 pr-4 text-xs text-gray-400">{{ m.provider }}</td>
+                <td class="py-2.5 pr-4 text-right font-mono"><span :class="priceColor(m.pricing.standard.input_per_1m)">{{ fmt(m.pricing.standard.input_per_1m) }}</span></td>
+                <td class="py-2.5 pr-4 text-right font-mono"><span :class="priceColor(m.pricing.standard.output_per_1m)">{{ fmt(m.pricing.standard.output_per_1m) }}</span></td>
+                <td class="py-2.5 pr-4 text-right font-mono text-gray-500">{{ fmt(m.pricing.cached_input_per_1m) }}</td>
+                <td class="py-2.5 font-mono text-gray-500" :class="calcActive ? 'pr-4 text-right' : 'text-right'">{{ fmt(m.pricing.batch?.input_per_1m) }}</td>
+                <td v-if="calcActive" class="py-2.5 text-right font-mono font-medium"><span :class="costColor(estimatedCost(m))">{{ fmtCost(estimatedCost(m)) }}</span></td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>
@@ -230,6 +239,65 @@ function fmt(val) {
   if (val === 0) return 'free'
   return `$${val.toFixed(4)}`
 }
+
+const groupByFamily = ref(false)
+
+function getFamily(id, provider) {
+  const s = id.toLowerCase()
+  // OpenAI
+  if (s.startsWith('o1')) return 'o1'
+  if (s.startsWith('o3')) return 'o3'
+  if (s.startsWith('o4')) return 'o4'
+  if (s.startsWith('gpt-3.5')) return 'gpt-3.5'
+  if (s.startsWith('gpt-4o')) return 'gpt-4o'
+  if (s.startsWith('gpt-4.1')) return 'gpt-4.1'
+  if (s.startsWith('gpt-4')) return 'gpt-4'
+  if (s.startsWith('gpt-5')) return 'gpt-5'
+  // Anthropic
+  if (s.includes('claude-opus')) return 'claude-opus'
+  if (s.includes('claude-sonnet')) return 'claude-sonnet'
+  if (s.includes('claude-haiku')) return 'claude-haiku'
+  if (s.includes('claude-fable')) return 'claude-fable'
+  // Google
+  const geminiMatch = s.match(/^gemini-(\d+\.?\d*)/)
+  if (geminiMatch) return `gemini-${geminiMatch[1]}`
+  const gemmaMatch = s.match(/^gemma-(\d+)/)
+  if (gemmaMatch) return `gemma-${gemmaMatch[1]}`
+  // Mistral
+  if (s.startsWith('mistral-large')) return 'mistral-large'
+  if (s.startsWith('mistral-small') || s.startsWith('mistral-small')) return 'mistral-small'
+  if (s.startsWith('mistral-medium')) return 'mistral-medium'
+  if (s.startsWith('ministral')) return 'ministral'
+  if (s.startsWith('mixtral')) return 'mixtral'
+  if (s.startsWith('codestral')) return 'codestral'
+  // DeepSeek
+  if (s.includes('deepseek-r1')) return 'deepseek-r1'
+  if (s.includes('deepseek-v3') || s.includes('deepseek-chat')) return 'deepseek-v3'
+  if (s.includes('deepseek-v4')) return 'deepseek-v4'
+  // Cohere
+  if (s.startsWith('command')) return 'command'
+  // xAI
+  const grokMatch = s.match(/^grok-(\d+)/)
+  if (grokMatch) return `grok-${grokMatch[1]}`
+  // Llama
+  const llamaMatch = s.match(/llama-?(3\.?\d*)/i)
+  if (llamaMatch) return `llama-${llamaMatch[1]}`
+  // Qwen
+  const qwenMatch = s.match(/qwen(\d+\.?\d*)/i)
+  if (qwenMatch) return `qwen${qwenMatch[1]}`
+  // fallback: provider
+  return provider
+}
+
+const groupedModels = computed(() => {
+  const groups = {}
+  for (const m of filteredModels.value) {
+    const fam = getFamily(m.id, m.provider)
+    if (!groups[fam]) groups[fam] = []
+    groups[fam].push(m)
+  }
+  return Object.fromEntries(Object.entries(groups).sort(([a], [b]) => a.localeCompare(b)))
+})
 
 function estimatedCost(m) {
   const inp = (calcInput.value ?? 0) / 1_000_000 * (m.pricing.standard.input_per_1m ?? 0)
