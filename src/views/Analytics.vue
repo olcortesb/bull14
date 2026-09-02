@@ -1,7 +1,10 @@
 <template>
   <div class="px-6 py-8 max-w-5xl mx-auto">
     <div class="mb-6">
-      <h1 class="text-2xl font-bold">Analytics</h1>
+      <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold">Analytics</h1>
+        <HelpPanel title="Analytics — definitions" :fields="HELP_FIELDS" />
+      </div>
       <p v-if="meta" class="text-xs text-gray-500 mt-1">Generated {{ meta.generated }}</p>
     </div>
 
@@ -105,8 +108,18 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import HelpPanel from '../components/HelpPanel.vue'
 
 const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
+
+const HELP_FIELDS = [
+  { name: 'Hype Score', description: 'Composite score based on HuggingFace downloads (60% weight) and likes (40% weight). Normalized: 10M downloads = 60pts, 100K likes = 40pts. Max = 100.' },
+  { name: 'HF Downloads', description: 'Monthly downloads from HuggingFace Hub. Reflects how often the model weights are pulled for local use.' },
+  { name: 'Price Trends', description: 'Historical price changes detected by the pipeline. Shows field (input/output), previous price and new price with % change.' },
+  { name: 'Breakeven Utilization', description: 'The GPU utilization % at which self-hosting becomes cheaper than the API. Assumes H100 processing ~1M tokens/min. Lower % = self-hosting wins at lower usage.' },
+  { name: 'API $/1M', description: 'Input token price from the cheapest available API provider for this model.' },
+  { name: 'H100 $/hr', description: 'Cheapest H100 hourly price found across all tracked hardware providers.' },
+]
 
 const data = ref(null)
 const loading = ref(true)

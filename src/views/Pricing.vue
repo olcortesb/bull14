@@ -6,7 +6,10 @@
         <h1 class="text-2xl font-bold">Pricing</h1>
         <p v-if="lastUpdated" class="text-xs text-gray-500 mt-1">Updated {{ lastUpdated }}</p>
       </div>
-      <span class="text-sm text-gray-500">{{ filteredModels.length }} models</span>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-gray-500">{{ filteredModels.length }} models</span>
+        <HelpPanel title="Pricing — column definitions" :fields="HELP_FIELDS" />
+      </div>
     </div>
 
     <div v-if="loading" class="text-gray-500 text-sm">Loading...</div>
@@ -104,6 +107,36 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import HelpPanel from '../components/HelpPanel.vue'
+
+const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
+
+const HELP_FIELDS = [
+  {
+    name: 'Model',
+    description: 'Model identifier as used in the provider API. Includes variant suffixes like :free, :nitro, :extended.',
+  },
+  {
+    name: 'Provider',
+    description: 'API provider serving the model. May differ from the model creator (e.g. Groq serves Meta\'s Llama models).',
+  },
+  {
+    name: 'Input /1M',
+    description: 'Cost per 1 million input (prompt) tokens in USD. This is what you pay for the text you send to the model.',
+  },
+  {
+    name: 'Output /1M',
+    description: 'Cost per 1 million output (completion) tokens in USD. Typically 3–10x more expensive than input.',
+  },
+  {
+    name: 'Cached /1M',
+    description: 'Discounted input price when using prompt caching. Repeated prefixes are cached server-side. Typically 75–90% cheaper than standard input.',
+  },
+  {
+    name: 'Batch Input /1M',
+    description: 'Discounted price for asynchronous batch processing. Requests are queued and processed within 24h. Typically 50% cheaper than standard.',
+  },
+]
 
 const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
 

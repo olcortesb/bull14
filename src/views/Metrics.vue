@@ -1,7 +1,10 @@
 <template>
   <div class="px-6 py-8 max-w-4xl mx-auto">
     <div class="mb-6">
-      <h1 class="text-2xl font-bold">Metrics</h1>
+      <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold">Metrics</h1>
+        <HelpPanel title="Metrics — definitions" :fields="HELP_FIELDS" />
+      </div>
       <p v-if="meta" class="text-xs text-gray-500 mt-1">Generated {{ meta.generated }} · Lambda stats last 7 days</p>
     </div>
 
@@ -108,8 +111,19 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import HelpPanel from '../components/HelpPanel.vue'
 
 const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
+
+const HELP_FIELDS = [
+  { name: 'Invocations (7d)', description: 'Total Lambda function invocations in the last 7 days across all pipeline functions. Each daily run = 7 invocations per function.' },
+  { name: 'Errors (7d)', description: 'Total failed invocations in the last 7 days. A healthy pipeline should show 0.' },
+  { name: 'DynamoDB Items', description: 'Total items stored in the DynamoDB table. Includes MODEL, PRICING, TOOL, GPU_OFFER and CHANGE entities.' },
+  { name: 'Avg Duration', description: 'Average Lambda execution time in milliseconds over the last 7 days. Billed in 1ms increments.' },
+  { name: 'Error Rate', description: 'Errors / Invocations ratio. Shown as percentage. 0% = all runs successful.' },
+  { name: 'Status', description: '● ok = ran successfully. ● error = had failures. ○ no data = CloudWatch metrics not yet available (takes ~24h for new functions).' },
+  { name: 'Data Files', description: 'S3 files served via CloudFront. Shows file size and last modification time. ● ready = file exists and has content. ● missing = file not found in S3.' },
+]
 
 const data = ref(null)
 const loading = ref(true)

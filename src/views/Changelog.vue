@@ -7,7 +7,10 @@
           {{ meta.total }} changes · last {{ meta.window_days }} days · generated {{ meta.generated }}
         </p>
       </div>
-      <span class="text-sm text-gray-500">{{ filteredItems.length }} entries</span>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-gray-500">{{ filteredItems.length }} entries</span>
+        <HelpPanel title="Changelog — field definitions" :fields="HELP_FIELDS" />
+      </div>
     </div>
 
     <div v-if="loading" class="text-gray-500 text-sm">Loading...</div>
@@ -68,8 +71,27 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import HelpPanel from '../components/HelpPanel.vue'
 
 const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
+
+const HELP_FIELDS = [
+  {
+    name: 'Type',
+    description: 'Category of change detected.',
+    values: [
+      { label: '+ added', class: 'bg-blue-900/40 text-blue-300', desc: 'New model, tool or pricing entry detected.' },
+      { label: '↓ dropped', class: 'bg-green-900/40 text-green-300', desc: 'Price decreased.' },
+      { label: '~ price', class: 'bg-yellow-900/40 text-yellow-300', desc: 'Price changed (up or down).' },
+      { label: '↑ version', class: 'bg-purple-900/40 text-purple-300', desc: 'New version released for a tool or framework.' },
+      { label: '✕ deprecated', class: 'bg-red-900/40 text-red-300', desc: 'Model or service marked as deprecated.' },
+    ],
+  },
+  { name: 'Detail', description: 'Human-readable description of the change. For pricing: shows old and new values. For versions: shows previous and new version.' },
+  { name: 'Date', description: 'Date the change was detected by the pipeline (UTC). Runs daily at 06:00 UTC.' },
+  { name: 'Domain', description: 'Which data domain the change belongs to: pricing, models, tools or hardware.' },
+  { name: 'Price delta', description: 'For hardware price changes: shows new price (top) and old price (strikethrough). Green = cheaper, red = more expensive.' },
+]
 
 const allItems = ref([])
 const meta = ref(null)

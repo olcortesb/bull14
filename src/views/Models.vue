@@ -5,7 +5,10 @@
         <h1 class="text-2xl font-bold">Models</h1>
         <p v-if="lastUpdated" class="text-xs text-gray-500 mt-1">Updated {{ lastUpdated }}</p>
       </div>
-      <span class="text-sm text-gray-500">{{ models.length }} models</span>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-gray-500">{{ models.length }} models</span>
+        <HelpPanel title="Models — column definitions" :fields="HELP_FIELDS" />
+      </div>
     </div>
 
     <!-- Loading -->
@@ -72,6 +75,70 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import HelpPanel from '../components/HelpPanel.vue'
+
+const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
+
+const HELP_FIELDS = [
+  {
+    name: 'Model',
+    description: 'Name and unique identifier of the model. The ID is used to reference it in APIs and deployments.',
+  },
+  {
+    name: 'Provider',
+    description: 'Company or organization that created and maintains the model (e.g. OpenAI, Anthropic, Meta).',
+  },
+  {
+    name: 'Access',
+    description: 'How the model can be used.',
+    values: [
+      { label: 'api-only', class: 'bg-purple-900/50 text-purple-300', desc: 'Only available via paid API. Weights not public.' },
+      { label: 'open-weight', class: 'bg-green-900/50 text-green-300', desc: 'Weights are publicly available. Can be run locally or self-hosted.' },
+      { label: 'both', class: 'bg-blue-900/50 text-blue-300', desc: 'Available via API and as downloadable weights.' },
+    ],
+  },
+  {
+    name: 'Params',
+    description: 'Number of parameters in the model (e.g. 7B, 70B, 671B). Larger = more capable but more expensive to run. MoE models activate only a fraction of params per token.',
+  },
+  {
+    name: 'Context',
+    description: 'Maximum context window — total tokens (input + output) the model can process in a single request. 128K = ~100,000 words.',
+  },
+  {
+    name: 'Modalities',
+    description: 'Types of input/output the model supports.',
+    values: [
+      { label: 'text', desc: 'Processes and generates text.' },
+      { label: 'code', desc: 'Optimized for code generation and understanding.' },
+      { label: 'vision', desc: 'Can process images as input.' },
+      { label: 'audio', desc: 'Can process or generate audio.' },
+    ],
+  },
+  {
+    name: 'License',
+    description: 'Usage license.',
+    values: [
+      { label: 'proprietary', desc: 'Closed license. Usage governed by provider ToS.' },
+      { label: 'apache-2.0', desc: 'Permissive open source. Commercial use allowed.' },
+      { label: 'llama3', desc: 'Meta\'s custom license. Commercial use allowed under conditions.' },
+      { label: 'mit', desc: 'Permissive open source. Minimal restrictions.' },
+    ],
+  },
+  {
+    name: 'HF Downloads',
+    description: 'Monthly downloads from HuggingFace Hub. Proxy for community adoption and usage. Updated daily.',
+  },
+  {
+    name: 'Status',
+    description: 'Current lifecycle status of the model.',
+    values: [
+      { label: 'active', class: 'bg-green-900/50 text-green-300', desc: 'Actively maintained and recommended for use.' },
+      { label: 'preview', class: 'bg-yellow-900/50 text-yellow-300', desc: 'Early access. API or weights may change.' },
+      { label: 'deprecated', class: 'bg-red-900/50 text-red-300', desc: 'No longer recommended. May be removed.' },
+    ],
+  },
+]
 
 const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
 

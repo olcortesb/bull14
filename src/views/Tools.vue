@@ -5,7 +5,10 @@
         <h1 class="text-2xl font-bold">Tools</h1>
         <p v-if="lastUpdated" class="text-xs text-gray-500 mt-1">Updated {{ lastUpdated }}</p>
       </div>
-      <span class="text-sm text-gray-500">{{ filteredTools.length }} tools</span>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-gray-500">{{ filteredTools.length }} tools</span>
+        <HelpPanel title="Tools — column definitions" :fields="HELP_FIELDS" />
+      </div>
     </div>
 
     <div v-if="loading" class="text-gray-500 text-sm">Loading...</div>
@@ -132,8 +135,50 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import HelpPanel from '../components/HelpPanel.vue'
 
 const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
+
+const HELP_FIELDS = [
+  { name: 'Tool', description: 'Name and short description of the framework or library.' },
+  {
+    name: 'Category',
+    description: 'Functional category.',
+    values: [
+      { label: 'orchestration', class: 'bg-purple-900/50 text-purple-300', desc: 'Frameworks for building multi-step AI pipelines and agents (LangChain, CrewAI, LangGraph).' },
+      { label: 'runtime', class: 'bg-blue-900/50 text-blue-300', desc: 'Inference servers and model serving engines (vLLM, Ollama, TGI, SGLang).' },
+      { label: 'eval', class: 'bg-yellow-900/50 text-yellow-300', desc: 'Evaluation and testing frameworks for LLM outputs (Braintrust, Promptfoo).' },
+      { label: 'observability', class: 'bg-green-900/50 text-green-300', desc: 'Tracing, monitoring and debugging tools for LLM applications (LangSmith, Opik, Arize Phoenix).' },
+    ],
+  },
+  { name: 'Version', description: 'Latest stable release version from GitHub or package registry.' },
+  { name: 'Released', description: 'Date of the latest release.' },
+  { name: 'Stars', description: 'GitHub star count. Proxy for community adoption.' },
+  { name: 'License', description: 'Open source license. MIT/Apache = permissive commercial use.' },
+  {
+    name: 'Activity',
+    description: 'Commit activity based on last commit date.',
+    values: [
+      { label: '● active', class: 'bg-green-900/50 text-green-300', desc: 'Commit in the last 30 days.' },
+      { label: '● slow', class: 'bg-yellow-900/50 text-yellow-300', desc: 'Last commit 30–90 days ago.' },
+      { label: '● inactive', class: 'bg-red-900/50 text-red-300', desc: 'No commits in over 90 days.' },
+    ],
+  },
+  {
+    name: 'Capabilities',
+    description: 'Feature icons. Click a row to see full capability breakdown.',
+    values: [
+      { label: '⚡', desc: 'Streaming — supports token streaming.' },
+      { label: '🔄', desc: 'Async — async/await support.' },
+      { label: '💻', desc: 'Local models — runs models locally.' },
+      { label: '👁', desc: 'Vision — multimodal image input.' },
+      { label: '🔧', desc: 'Function calling — tool/function use.' },
+      { label: '💾', desc: 'Stateful — persistent memory/state.' },
+      { label: '🕸', desc: 'Graph-based — DAG or graph execution.' },
+      { label: '🏠', desc: 'Self-hostable — can run on your own infra.' },
+    ],
+  },
+]
 
 const tools = ref([])
 const loading = ref(true)
