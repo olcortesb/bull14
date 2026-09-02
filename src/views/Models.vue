@@ -225,7 +225,11 @@ function clearFilters() {
 function formatContext(n) {
   if (!n) return '—'
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`
-  return `${(n / 1000).toFixed(0)}K`
+  // Round to nearest standard commercial value
+  const k = Math.round(n / 1000)
+  const standards = [4, 8, 16, 32, 64, 128, 200, 256, 512, 1024]
+  const nearest = standards.reduce((a, b) => Math.abs(b - k) < Math.abs(a - k) ? b : a)
+  return `${nearest}K`
 }
 
 function formatNum(n) {
