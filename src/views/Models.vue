@@ -6,7 +6,7 @@
         <p v-if="lastUpdated" class="text-xs text-gray-500 mt-1">Updated {{ lastUpdated }}</p>
       </div>
       <div class="flex items-center gap-3">
-        <span class="text-sm text-gray-500">{{ models.length }} models</span>
+        <span class="text-sm text-gray-500">{{ filteredModels.length }} / {{ models.length }} models</span>
         <HelpPanel title="Models — column definitions" :fields="HELP_FIELDS" />
       </div>
     </div>
@@ -18,7 +18,43 @@
     <div v-else-if="error" class="text-red-400 text-sm">{{ error }}</div>
 
     <!-- Table -->
-    <div v-else class="overflow-x-auto">
+    <div v-else>
+      <!-- Filters -->
+      <div class="mb-4 flex flex-wrap gap-3 items-center">
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="p in providers" :key="p"
+            @click="toggleProvider(p)"
+            :class="selectedProviders.has(p) ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
+            class="px-2.5 py-1 rounded text-xs font-medium transition-colors capitalize"
+          >{{ p }}</button>
+        </div>
+        <div class="h-4 w-px bg-gray-700" />
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="a in ACCESS_OPTIONS" :key="a.key"
+            @click="selectedAccess = selectedAccess === a.key ? null : a.key"
+            :class="selectedAccess === a.key ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
+            class="px-2.5 py-1 rounded text-xs font-medium transition-colors"
+          >{{ a.label }}</button>
+        </div>
+        <div class="h-4 w-px bg-gray-700" />
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="m in modalities" :key="m"
+            @click="toggleModality(m)"
+            :class="selectedModalities.has(m) ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
+            class="px-2.5 py-1 rounded text-xs font-medium transition-colors"
+          >{{ m }}</button>
+        </div>
+        <button
+          v-if="hasActiveFilters"
+          @click="clearFilters"
+          class="text-xs text-gray-600 hover:text-white transition-colors ml-1"
+        >✕ clear</button>
+      </div>
+
+      <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-gray-800 text-left text-xs text-gray-500 uppercase tracking-wider">
@@ -34,7 +70,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-800/50">
-          <tr v-for="m in models" :key="m.id" class="hover:bg-gray-900/50 transition-colors">
+          <tr v-for="m in filteredModels" :key="m.id" class="hover:bg-gray-900/50 transition-colors">
             <td class="py-3 pr-4">
               <div class="font-medium text-white">{{ m.name }}</div>
               <div class="text-xs text-gray-500">{{ m.id }}</div>
@@ -68,14 +104,69 @@
             </td>
           </tr>
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import HelpPanel from '../components/HelpPanel.vue'
+
+const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
+
+const ACCESS_OPTIONS = [
+  { key: 'api-only',    label: 'API only' },
+  { key: 'both',        label: 'Open weight' },
+]
+
+const models = ref([])
+const loading = ref(true)
+const error = ref(null)
+const lastUpdated = ref(null)
+
+const providers = ref([])
+const modalities = ref([])
+const selectedProviders = ref(new Set())
+const selectedModalities = ref(new Set())
+const selectedAccess = ref(null)
+
+const hasActiveFilters = computed(() =>
+  selectedAccess.value !== null ||
+  selectedModalities.value.size > 0 ||
+  selectedProviders.value.size < providers.value.length
+)
+
+function toggleProvider(p) {
+  const s = new Set(selectedProviders.value)
+  s.has(p) ? s.delete(p) : s.add(p)
+  selectedProviders.value = s
+}
+
+function toggleModality(m) {
+  const s = new Set(selectedModalities.value)
+  s.has(m) ? s.delete(m) : s.add(m)
+  selectedModalities.value = s
+}
+
+function clearFilters() {
+  selectedProviders.value = new Set(providers.value)
+  selectedModalities.value = new Set()
+  selectedAccess.value = null
+}
+
+const filteredModels = computed(() => {
+  return models.value.filter(m => {
+    if (!selectedProviders.value.has(m.provider)) return false
+    if (selectedAccess.value && m.access !== selectedAccess.value) return false
+    if (selectedModalities.value.size > 0) {
+      const mods = m.modalities ?? []
+      if (![...selectedModalities.value].every(mod => mods.includes(mod))) return false
+    }
+    return true
+  })
+}
 
 const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
 
@@ -154,6 +245,9 @@ onMounted(async () => {
     const data = await res.json()
     models.value = data.models
     lastUpdated.value = new Date(data.lastUpdated).toLocaleString()
+    providers.value = [...new Set(data.models.map(m => m.provider))].sort()
+    modalities.value = [...new Set(data.models.flatMap(m => m.modalities ?? []))].sort()
+    selectedProviders.value = new Set(providers.value)
   } catch (e) {
     error.value = `Failed to load models: ${e.message}`
   } finally {
