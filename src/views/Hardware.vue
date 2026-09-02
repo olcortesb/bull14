@@ -57,7 +57,8 @@
                   <th class="px-4 py-2">GPU</th>
                   <th class="px-4 py-2 text-right">VRAM</th>
                   <th class="px-4 py-2 text-right">$/hr</th>
-                  <th class="px-4 py-2 text-right">Spot $/hr</th>
+                  <th v-if="p.id === 'vastai'" class="px-4 py-2 text-center">Interruptible</th>
+                  <th v-else class="px-4 py-2 text-right">Spot $/hr</th>
                   <th class="px-4 py-2">Interconnect</th>
                   <th class="px-4 py-2">Availability</th>
                   <th v-if="p.id === 'vastai'" class="px-4 py-2 text-right">Reliability</th>
@@ -70,7 +71,11 @@
                   <td class="px-4 py-2.5 text-right font-mono text-xs" :class="priceClass(g.price_per_hour)">
                     ${{ g.price_per_hour?.toFixed(3) ?? '—' }}
                   </td>
-                  <td class="px-4 py-2.5 text-right font-mono text-xs text-gray-500">
+                  <td v-if="p.id === 'vastai'" class="px-4 py-2.5 text-center text-xs">
+                    <span v-if="g.interruptible" class="text-yellow-400">yes</span>
+                    <span v-else class="text-gray-600">no</span>
+                  </td>
+                  <td v-else class="px-4 py-2.5 text-right font-mono text-xs text-gray-500">
                     {{ g.price_spot != null ? `$${g.price_spot.toFixed(3)}` : '—' }}
                   </td>
                   <td class="px-4 py-2.5 text-xs text-gray-500">{{ g.interconnect ?? '—' }}</td>
@@ -111,6 +116,7 @@ const HELP_FIELDS = [
     description: 'Price per GPU per hour in USD. For live providers (RunPod, Vast.ai) this reflects current market rates.',
   },
   { name: 'Spot $/hr', description: 'Interruptible/spot price. Cheaper but can be preempted. Only available on RunPod community cloud.' },
+  { name: 'Interruptible', description: 'Vast.ai only. Whether the offer can be interrupted by the host. Interruptible offers are cheaper but less stable.' },
   {
     name: 'Interconnect',
     description: 'GPU-to-GPU communication fabric for multi-GPU setups.',

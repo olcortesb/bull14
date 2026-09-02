@@ -67,11 +67,11 @@
       <section>
         <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Breakeven — API vs Self-Host</h2>
         <p class="text-xs text-gray-600 mb-4">
-          At what GPU utilization does self-hosting beat the API price? Lower = self-hosting wins sooner.
-          Based on cheapest H100 available.
+          Monthly token volume at which self-hosting an H100 beats the API price.
+          Based on cheapest H100 available × 730 hrs/month.
         </p>
         <div v-if="breakeven.length === 0" class="text-xs text-gray-600 py-4">
-          No breakeven data yet — requires models with API pricing in the curated list.
+          No breakeven data yet.
         </div>
         <div v-else class="overflow-x-auto">
           <table class="w-full text-sm">
@@ -80,8 +80,8 @@
                 <th class="pb-2 pr-4">Model</th>
                 <th class="pb-2 pr-4 text-right">API $/1M in</th>
                 <th class="pb-2 pr-4 text-right">H100 $/hr</th>
-                <th class="pb-2 pr-4 text-right">Breakeven util.</th>
-                <th class="pb-2">Verdict</th>
+                <th class="pb-2 pr-4 text-right">GPU $/month</th>
+                <th class="pb-2 text-right">Breakeven tokens/month</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-800/50">
@@ -90,12 +90,12 @@
                   <div class="text-gray-200">{{ b.name }}</div>
                   <div class="text-xs text-gray-600">{{ b.provider }}</div>
                 </td>
-                <td class="py-2.5 pr-4 text-right font-mono text-xs text-gray-400">${{ b.api_input_per_1m?.toFixed(3) }}</td>
+                <td class="py-2.5 pr-4 text-right font-mono text-xs text-gray-400">${{ b.api_input_per_1m?.toFixed(4) }}</td>
                 <td class="py-2.5 pr-4 text-right font-mono text-xs text-gray-400">${{ b.h100_price_per_hour?.toFixed(2) }}</td>
-                <td class="py-2.5 pr-4 text-right font-mono text-xs" :class="utilClass(b.breakeven_utilization)">
-                  {{ (b.breakeven_utilization * 100).toFixed(1) }}%
+                <td class="py-2.5 pr-4 text-right font-mono text-xs text-gray-400">${{ b.monthly_gpu_cost?.toFixed(0) }}</td>
+                <td class="py-2.5 text-right font-mono text-xs" :class="breakevenClass(b.breakeven_tokens_month)">
+                  {{ b.breakeven_tokens_readable }}
                 </td>
-                <td class="py-2.5 text-xs text-gray-500">{{ b.self_host_cheaper_above }}</td>
               </tr>
             </tbody>
           </table>
@@ -156,9 +156,10 @@ function pctChange(prev, now) {
   return Math.abs(((now - prev) / prev) * 100).toFixed(1)
 }
 
-function utilClass(u) {
-  if (u < 0.1) return 'text-green-400'
-  if (u < 0.3) return 'text-yellow-400'
-  return 'text-red-400'
+function breakevenClass(tokens) {
+  if (!tokens) return 'text-gray-600'
+  if (tokens < 500_000_000) return 'text-green-400'   // < 500M — self-host wins easily
+  if (tokens < 5_000_000_000) return 'text-yellow-400' // < 5B — moderate usage
+  return 'text-red-400'                                 // > 5B — need massive scale
 }
 </script>

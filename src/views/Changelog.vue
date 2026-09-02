@@ -140,9 +140,11 @@ const filteredItems = computed(() =>
 )
 
 function formatDetail(item) {
-  if (item.type === 'price_change' && item.gpu_type) {
-    const dir = item.price_now < item.price_prev ? '↓' : '↑'
-    return `${item.provider} · ${item.gpu_type} price ${dir}`
+  if (item.type === 'price_change' || item.type === 'price_dropped' || item.type === 'price_increased') {
+    if (item.gpu_type) {
+      const dir = item.price_now < item.price_prev ? '↓' : '↑'
+      return `${item.provider} · ${item.gpu_type} price ${dir}`
+    }
   }
   if (item.type === 'new_version') return `${item.tool_id ?? ''} → v${item.new_value}`
   if (item.type === 'model_added') return `${item.model_id ?? ''} added`
@@ -151,13 +153,14 @@ function formatDetail(item) {
 
 function typeLabel(type) {
   return {
-    pricing_added: '+ added',
-    price_change: '~ price',
-    price_dropped: '↓ dropped',
-    new_version: '↑ version',
-    model_added: '+ model',
-    model_deprecated: '✕ deprecated',
-    tool_added: '+ tool',
+    pricing_added:   '+ added',
+    price_change:    '~ price',
+    price_dropped:   '↓ dropped',
+    price_increased: '↑ increased',
+    new_version:     '↑ version',
+    model_added:     '+ model',
+    model_deprecated:'✕ deprecated',
+    tool_added:      '+ tool',
   }[type] ?? type
 }
 
@@ -166,6 +169,8 @@ function typeClass(type) {
     return 'bg-blue-900/40 text-blue-300'
   if (type === 'price_dropped')
     return 'bg-green-900/40 text-green-300'
+  if (type === 'price_increased')
+    return 'bg-red-900/40 text-red-300'
   if (type === 'price_change')
     return 'bg-yellow-900/40 text-yellow-300'
   if (type === 'new_version')
