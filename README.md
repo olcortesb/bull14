@@ -1,36 +1,80 @@
 # bull14
 
-AI models, APIs, tools and GPU pricing tracker — updated daily.
-
-> From *bulbullia* (Latin) — the root of *burbuja* (bubble). An honest look at the AI hype.
+AI models, pricing, tools and GPU tracker — updated daily.
 
 Live at [bull14.olcortesb.com](https://bull14.olcortesb.com)
 
-## What it tracks
+## What is this?
 
-- **Models** — open-weight and API-only, with context window, modalities, license and quantization formats
-- **Pricing** — input/output cost per 1M tokens per provider, updated daily
-- **Deployments** — where each model runs (API, cloud GPU, local) and at what cost
-- **Tools** — frameworks, runtimes, eval and observability tools with latest versions
-- **Hardware** — GPU cloud pricing (vast.ai, RunPod, Lambda Labs) per GPU type
-- **Analytics** — hype index, price tracker, model velocity, GPU price index, breakeven calculator
+A tracker for the AI ecosystem: models, APIs, frameworks and GPU cloud pricing.
+Built for personal use first — to decide what model/API to use, how much it costs, what's new.
+
+> "Not everything that shines is intelligence."
 
 ## Tech Stack
 
-- Vue 3 + Vite + Tailwind CSS
+- Vue 3 + Vite
+- Tailwind CSS
+- Vue Router
 - AWS Amplify (hosting)
-- Data served via CloudFront fetch() — no static imports
+
+## Views
+
+| Route | Description |
+|-------|-------------|
+| `/` | Home |
+| `/models` | 10 curated AI models with metadata and live HF stats |
+
+## Data
+
+JSON files served from CloudFront, generated daily by [bull14-backend](https://github.com/olcortesb/bull14-backend):
+
+| File | Content |
+|------|---------|
+| `data/models.json` | Models metadata, HF downloads/likes, access type |
+| `data/pricing.json` | Pricing per token by provider *(coming soon)* |
+| `data/tools.json` | Framework versions *(coming soon)* |
+| `data/hardware.json` | GPU cloud pricing *(coming soon)* |
+| `data/changelog.json` | Detected changes *(coming soon)* |
+
+## Models (v1)
+
+10 curated models covering the main use cases:
+
+- **API-only**: GPT-4o, Claude Sonnet 4, Gemini 2.0 Flash
+- **Open-weight large**: Llama 3.1 70B, DeepSeek R1, Qwen 2.5 72B
+- **Open-weight local**: Llama 3.1 8B, Mistral 7B, Phi-4, Gemma 3 27B
 
 ## Development
 
 ```bash
 npm install
-npm run dev
+npm run dev   # http://localhost:5173
 ```
 
-## Data
+## Deploy
 
-JSON files served from CloudFront, generated daily by [bull14-backend](https://github.com/olcortesb/bull14-backend).
+Connected to AWS Amplify — auto-deploys on push to `main`.
+
+```yaml
+# amplify.yml
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+```
 
 ## License
 
