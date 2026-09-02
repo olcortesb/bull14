@@ -8,6 +8,7 @@
       <router-link to="/hardware" class="text-sm text-gray-400 hover:text-white transition-colors">Hardware</router-link>
       <router-link to="/changelog" class="text-sm text-gray-400 hover:text-white transition-colors">Changelog</router-link>
       <router-link to="/analytics" class="text-sm text-gray-400 hover:text-white transition-colors">Analytics</router-link>
+      <router-link to="/metrics" class="text-sm text-gray-400 hover:text-white transition-colors">Metrics</router-link>
     </nav>
     <router-view />
   </div>

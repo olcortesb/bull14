@@ -6,6 +6,7 @@ import Tools from '../views/Tools.vue'
 import Hardware from '../views/Hardware.vue'
 import Changelog from '../views/Changelog.vue'
 import Analytics from '../views/Analytics.vue'
+import Metrics from '../views/Metrics.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -15,6 +16,7 @@ const routes = [
   { path: '/hardware', component: Hardware },
   { path: '/changelog', component: Changelog },
   { path: '/analytics', component: Analytics },
+  { path: '/metrics', component: Metrics },
 ]
 
 export default createRouter({
