@@ -86,7 +86,7 @@ const query = ref('')
 const inputRef = ref(null)
 const selectedIndex = ref(0)
 const searchIndex = ref([])
-let fuse = null
+const fuseInstance = ref(null)
 
 // Build flat search index from all data sources
 async function buildIndex() {
@@ -151,7 +151,7 @@ async function buildIndex() {
     }
 
     searchIndex.value = items
-    fuse = new Fuse(items, {
+    fuseInstance.value = new Fuse(items, {
       keys: ['name', 'subtitle', 'keywords'],
       threshold: 0.4,
       minMatchCharLength: 2,
@@ -164,8 +164,8 @@ async function buildIndex() {
 }
 
 const results = computed(() => {
-  if (!fuse || query.value.length < 2) return []
-  return fuse.search(query.value).slice(0, 12)
+  if (!fuseInstance.value || query.value.length < 2) return []
+  return fuseInstance.value.search(query.value).slice(0, 12)
 })
 
 watch(results, () => { selectedIndex.value = 0 })
