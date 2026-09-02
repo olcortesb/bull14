@@ -1,29 +1,30 @@
 # bull14
 
-AI models, pricing, tools and GPU tracker — updated daily.
+AI models, pricing, tools and GPU cloud tracker — updated daily.
 
 Live at [bull14.olcortesb.com](https://bull14.olcortesb.com)
+
+## Name
+
+From **bulbullia** (Latin) — bubble. A reminder that not all that inflates has substance.
 
 ## What is this?
 
 A tracker for the AI ecosystem: models, APIs, frameworks and GPU cloud pricing.
 Built for personal use first — to decide what model/API to use, how much it costs, what's new.
 
-> "Not everything that shines is intelligence."
-
-## Tech Stack
-
-- Vue 3 + Vite
-- Tailwind CSS
-- Vue Router
-- AWS Amplify (hosting)
-
 ## Views
 
 | Route | Description |
 |-------|-------------|
-| `/` | Home |
-| `/models` | 10 curated AI models with metadata and live HF stats |
+| `/` | Home — live stats, nav, sources and how to contribute |
+| `/models` | Curated models with metadata, access type, modalities and HF stats. Filters by provider, access and modality |
+| `/pricing` | Cost per token across 60+ providers. Input, output, cached and batch pricing |
+| `/tools` | 26 frameworks — versions, activity badge, capability breakdown |
+| `/hardware` | GPU cloud pricing across 6 providers — live where APIs are available |
+| `/changelog` | Daily feed of detected changes: price drops, new models, new versions |
+| `/analytics` | Hype index, price trends and API vs self-host breakeven |
+| `/metrics` | Pipeline health — Lambda invocations, errors, S3 file status |
 
 ## Data
 
@@ -32,18 +33,19 @@ JSON files served from CloudFront, generated daily by [bull14-backend](https://g
 | File | Content |
 |------|---------|
 | `data/models.json` | Models metadata, HF downloads/likes, access type |
-| `data/pricing.json` | Pricing per token by provider *(coming soon)* |
-| `data/tools.json` | Framework versions *(coming soon)* |
-| `data/hardware.json` | GPU cloud pricing *(coming soon)* |
-| `data/changelog.json` | Detected changes *(coming soon)* |
+| `data/pricing.json` | Pricing per token — 378 models, 61 providers |
+| `data/tools.json` | Framework versions, stars, activity, capabilities |
+| `data/hardware.json` | GPU cloud pricing — RunPod/Vast.ai live, rest static |
+| `data/changelog.json` | Detected changes (90-day window) |
+| `data/analytics.json` | Hype index, price trends, breakeven |
+| `data/metrics.json` | Pipeline health metrics |
 
-## Models (v1)
+## Tech Stack
 
-10 curated models covering the main use cases:
-
-- **API-only**: GPT-4o, Claude Sonnet 4, Gemini 2.0 Flash
-- **Open-weight large**: Llama 3.1 70B, DeepSeek R1, Qwen 2.5 72B
-- **Open-weight local**: Llama 3.1 8B, Mistral 7B, Phi-4, Gemma 3 27B
+- Vue 3 + Vite
+- Tailwind CSS
+- Vue Router
+- AWS Amplify (hosting)
 
 ## Development
 
@@ -52,29 +54,12 @@ npm install
 npm run dev   # http://localhost:5173
 ```
 
-## Deploy
+## Contribute
 
-Connected to AWS Amplify — auto-deploys on push to `main`.
-
-```yaml
-# amplify.yml
-version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - npm ci
-    build:
-      commands:
-        - npm run build
-  artifacts:
-    baseDirectory: dist
-    files:
-      - '**/*'
-  cache:
-    paths:
-      - node_modules/**/*
-```
+- **Add a model** → edit `src/models-collector/handler.py` in the backend repo
+- **Add a tool** → edit `src/tools-collector/tools_base.yaml`
+- **Add a GPU provider** → edit `src/hardware-collector/hardware_base.yaml`
+- **Report an issue** → open an issue on GitHub
 
 ## License
 

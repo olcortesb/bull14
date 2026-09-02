@@ -8,7 +8,7 @@
         A tracker for the AI ecosystem: models, APIs, frameworks and GPU cloud pricing.
         Built for personal use first — to decide what model/API to use, how much it costs, what's new.
       </p>
-      <p class="text-gray-600 text-sm italic">"Not everything that shines is intelligence."</p>
+      <p class="text-gray-600 text-sm italic">From <span class="not-italic font-mono text-gray-500">bulbullia</span> (Latin) — bubble. A reminder that not all that inflates has substance.</p>
     </div>
 
     <!-- Live stats -->
