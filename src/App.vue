@@ -5,6 +5,7 @@
       <router-link to="/models" class="text-sm text-gray-400 hover:text-white transition-colors">Models</router-link>
       <router-link to="/pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</router-link>
       <router-link to="/tools" class="text-sm text-gray-400 hover:text-white transition-colors">Tools</router-link>
+      <router-link to="/hardware" class="text-sm text-gray-400 hover:text-white transition-colors">Hardware</router-link>
     </nav>
     <router-view />
   </div>
