@@ -106,7 +106,7 @@
 import { ref, computed, onMounted } from 'vue'
 import HelpPanel from '../components/HelpPanel.vue'
 
-const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
+import { getHardware } from '../data/index.js'
 
 const HELP_FIELDS = [
   { name: 'GPU', description: 'GPU model name. H100/H200 = latest datacenter GPUs for training and inference. A100 = previous gen. RTX = consumer/prosumer grade.' },
@@ -162,9 +162,7 @@ const CATEGORY_LABELS = {
 
 onMounted(async () => {
   try {
-    const res = await fetch(`${CLOUDFRONT_URL}/data/hardware.json`)
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    data.value = await res.json()
+    data.value = await getHardware()
   } catch (e) {
     error.value = `Failed to load hardware data: ${e.message}`
   } finally {

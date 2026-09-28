@@ -15,48 +15,17 @@
     <div v-else-if="error" class="text-red-400 text-sm">{{ error }}</div>
 
     <div v-else>
-      <!-- Filters -->
-      <div class="mb-4 flex flex-wrap gap-3 items-center">
-        <div class="flex flex-wrap gap-1.5">
-          <button
-            v-for="p in providers" :key="p"
-            @click="toggleProvider(p)"
-            :class="selectedProviders.has(p) ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
-            class="px-2.5 py-1 rounded text-xs font-medium transition-colors capitalize"
-          >{{ p }}</button>
-        </div>
-        <div class="h-4 w-px bg-gray-700" />
-        <div class="flex flex-wrap gap-1.5">
-          <button
-            v-for="a in ACCESS_OPTIONS" :key="a.key"
-            @click="selectedAccess = selectedAccess === a.key ? null : a.key"
-            :class="selectedAccess === a.key ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
-            class="px-2.5 py-1 rounded text-xs font-medium transition-colors"
-          >{{ a.label }}</button>
-        </div>
-        <div class="h-4 w-px bg-gray-700" />
-        <div class="flex flex-wrap gap-1.5">
-          <button
-            v-for="c in CATEGORY_OPTIONS" :key="c.key"
-            @click="selectedCategory = selectedCategory === c.key ? null : c.key"
-            :class="selectedCategory === c.key ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
-            class="px-2.5 py-1 rounded text-xs font-medium transition-colors"
-          >{{ c.label }}</button>
-        </div>
-        <div class="h-4 w-px bg-gray-700" />
-        <div class="flex flex-wrap gap-1.5">
-          <button
-            v-for="m in modalities" :key="m"
-            @click="toggleModality(m)"
-            :class="selectedModalities.has(m) ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
-            class="px-2.5 py-1 rounded text-xs font-medium transition-colors"
-          >{{ m }}</button>
-        </div>
+      <!-- Category tabs -->
+      <div class="mb-4 flex gap-1.5">
         <button
-          v-if="hasActiveFilters"
-          @click="clearFilters"
-          class="text-xs text-gray-600 hover:text-white transition-colors ml-1"
-        >✕ clear</button>
+          v-for="c in CATEGORY_OPTIONS" :key="c.key"
+          @click="selectedCategory = selectedCategory === c.key ? null : c.key"
+          :class="selectedCategory === c.key ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
+          class="px-3 py-1.5 rounded text-xs font-medium transition-colors"
+        >
+          {{ c.label }}
+          <span class="ml-1 opacity-60">{{ countByCategory(c.key) }}</span>
+        </button>
       </div>
 
       <div class="overflow-x-auto">
@@ -69,7 +38,6 @@
               <th class="pb-3 pr-4">Access</th>
               <th class="pb-3 pr-4">Params</th>
               <th class="pb-3 pr-4">Context</th>
-              <th class="pb-3 pr-4">Modalities</th>
               <th class="pb-3 pr-4">License</th>
               <th class="pb-3 pr-4">HF Downloads</th>
               <th class="pb-3">Status</th>
@@ -94,14 +62,6 @@
               </td>
               <td class="py-3 pr-4 text-gray-400">{{ m.parameters ?? '—' }}</td>
               <td class="py-3 pr-4 text-gray-400">{{ formatContext(m.context_window) }}</td>
-              <td class="py-3 pr-4">
-                <div class="flex gap-1 flex-wrap">
-                  <span v-for="mod in m.modalities" :key="mod"
-                    class="px-1.5 py-0.5 bg-gray-800 rounded text-xs text-gray-300">
-                    {{ mod }}
-                  </span>
-                </div>
-              </td>
               <td class="py-3 pr-4 text-gray-400 text-xs">{{ formatLicense(m.license) }}</td>
               <td class="py-3 pr-4 text-gray-400">{{ m.hf_downloads != null ? formatNum(m.hf_downloads) : '—' }}</td>
               <td class="py-3">
@@ -121,7 +81,7 @@
 import { ref, computed, onMounted } from 'vue'
 import HelpPanel from '../components/HelpPanel.vue'
 
-const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
+import { getModels } from '../data/index.js'
 
 const ACCESS_OPTIONS = [
   { key: 'api-only', label: 'API only' },
@@ -185,68 +145,29 @@ const models = ref([])
 const loading = ref(true)
 const error = ref(null)
 const lastUpdated = ref(null)
-const providers = ref([])
-const modalities = ref([])
-const selectedProviders = ref(new Set())
-const selectedModalities = ref(new Set())
-const selectedAccess = ref(null)
 const selectedCategory = ref(null)
 
-const hasActiveFilters = computed(() =>
-  selectedAccess.value !== null ||
-  selectedCategory.value !== null ||
-  selectedModalities.value.size > 0 ||
-  selectedProviders.value.size < providers.value.length
+const filteredModels = computed(() =>
+  selectedCategory.value
+    ? models.value.filter(m => m.category === selectedCategory.value)
+    : models.value
 )
 
-const filteredModels = computed(() =>
-  models.value.filter(m => {
-    if (!selectedProviders.value.has(m.provider)) return false
-    if (selectedAccess.value && m.access !== selectedAccess.value) return false
-    if (selectedCategory.value && m.category !== selectedCategory.value) return false
-    if (selectedModalities.value.size > 0) {
-      const mods = m.modalities ?? []
-      if (![...selectedModalities.value].every(mod => mods.includes(mod))) return false
-    }
-    return true
-  })
-)
+function countByCategory(key) {
+  return models.value.filter(m => m.category === key).length
+}
 
 onMounted(async () => {
   try {
-    const res = await fetch(`${CLOUDFRONT_URL}/data/models.json`)
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = await res.json()
+    const data = await getModels()
     models.value = data.models
     lastUpdated.value = new Date(data.lastUpdated).toLocaleString()
-    providers.value = [...new Set(data.models.map(m => m.provider))].sort()
-    modalities.value = [...new Set(data.models.flatMap(m => m.modalities ?? []))].sort()
-    selectedProviders.value = new Set(providers.value)
   } catch (e) {
     error.value = `Failed to load models: ${e.message}`
   } finally {
     loading.value = false
   }
 })
-
-function toggleProvider(p) {
-  const s = new Set(selectedProviders.value)
-  s.has(p) ? s.delete(p) : s.add(p)
-  selectedProviders.value = s
-}
-
-function toggleModality(m) {
-  const s = new Set(selectedModalities.value)
-  s.has(m) ? s.delete(m) : s.add(m)
-  selectedModalities.value = s
-}
-
-function clearFilters() {
-  selectedProviders.value = new Set(providers.value)
-  selectedModalities.value = new Set()
-  selectedAccess.value = null
-  selectedCategory.value = null
-}
 
 function formatContext(n) {
   if (!n) return '—'

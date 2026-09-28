@@ -137,7 +137,7 @@
 import { ref, computed, onMounted } from 'vue'
 import HelpPanel from '../components/HelpPanel.vue'
 
-const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
+import { getTools } from '../data/index.js'
 
 const HELP_FIELDS = [
   { name: 'Tool', description: 'Name and short description of the framework or library.' },
@@ -197,9 +197,7 @@ const CATEGORY_LABELS = {
 
 onMounted(async () => {
   try {
-    const res = await fetch(`${CLOUDFRONT_URL}/data/tools.json`)
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = await res.json()
+    const data = await getTools()
     tools.value = data.tools
     lastUpdated.value = new Date(data.lastUpdated).toLocaleString()
   } catch (e) {

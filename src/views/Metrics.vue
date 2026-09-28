@@ -113,7 +113,7 @@
 import { ref, computed, onMounted } from 'vue'
 import HelpPanel from '../components/HelpPanel.vue'
 
-const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
+import { getMetrics } from '../data/index.js'
 
 const HELP_FIELDS = [
   { name: 'Invocations (7d)', description: 'Total Lambda function invocations in the last 7 days across all pipeline functions. Each daily run = 7 invocations per function.' },
@@ -131,9 +131,7 @@ const error = ref(null)
 
 onMounted(async () => {
   try {
-    const res = await fetch(`${CLOUDFRONT_URL}/data/metrics.json`)
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    data.value = await res.json()
+    data.value = await getMetrics()
   } catch (e) {
     error.value = `Failed to load metrics: ${e.message}`
   } finally {

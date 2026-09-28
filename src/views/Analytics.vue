@@ -117,7 +117,7 @@
 import { ref, computed, onMounted } from 'vue'
 import HelpPanel from '../components/HelpPanel.vue'
 
-const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
+import { getAnalytics } from '../data/index.js'
 
 const HELP_FIELDS = [
   { name: 'Hype Score', description: 'Composite score based on HuggingFace downloads (60% weight) and likes (40% weight). Normalized: 10M downloads = 60pts, 100K likes = 40pts. Max = 100.' },
@@ -134,9 +134,7 @@ const error = ref(null)
 
 onMounted(async () => {
   try {
-    const res = await fetch(`${CLOUDFRONT_URL}/data/analytics.json`)
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    data.value = await res.json()
+    data.value = await getAnalytics()
   } catch (e) {
     error.value = `Failed to load analytics: ${e.message}`
   } finally {

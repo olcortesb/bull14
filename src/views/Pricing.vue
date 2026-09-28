@@ -167,7 +167,7 @@
 import { ref, computed, onMounted } from 'vue'
 import HelpPanel from '../components/HelpPanel.vue'
 
-const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.cloudfront.net'
+import { getPricing } from '../data/index.js'
 
 const HELP_FIELDS = [
   { name: 'Model', description: 'Model identifier as used in the provider API. Includes variant suffixes like :free, :nitro, :extended.' },
@@ -217,9 +217,7 @@ const activeSortOptions = computed(() =>
 
 onMounted(async () => {
   try {
-    const res = await fetch(`${CLOUDFRONT_URL}/data/pricing.json`)
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = await res.json()
+    const data = await getPricing()
     lastUpdated.value = new Date(data.lastUpdated).toLocaleString()
 
     // Flatten providers → models, skip ~ variants
