@@ -37,6 +37,15 @@
         <div class="h-4 w-px bg-gray-700" />
         <div class="flex flex-wrap gap-1.5">
           <button
+            v-for="c in CATEGORY_OPTIONS" :key="c.key"
+            @click="selectedCategory = selectedCategory === c.key ? null : c.key"
+            :class="selectedCategory === c.key ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
+            class="px-2.5 py-1 rounded text-xs font-medium transition-colors"
+          >{{ c.label }}</button>
+        </div>
+        <div class="h-4 w-px bg-gray-700" />
+        <div class="flex flex-wrap gap-1.5">
+          <button
             v-for="m in modalities" :key="m"
             @click="toggleModality(m)"
             :class="selectedModalities.has(m) ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
@@ -56,6 +65,7 @@
             <tr class="border-b border-gray-800 text-left text-xs text-gray-500 uppercase tracking-wider">
               <th class="pb-3 pr-4">Model</th>
               <th class="pb-3 pr-4">Provider</th>
+              <th class="pb-3 pr-4">Category</th>
               <th class="pb-3 pr-4">Access</th>
               <th class="pb-3 pr-4">Params</th>
               <th class="pb-3 pr-4">Context</th>
@@ -72,6 +82,11 @@
                 <div class="text-xs text-gray-500">{{ m.id }}</div>
               </td>
               <td class="py-3 pr-4 capitalize">{{ m.provider }}</td>
+              <td class="py-3 pr-4">
+                <span :class="categoryClass(m.category)" class="px-2 py-0.5 rounded text-xs font-medium">
+                  {{ m.category ?? '—' }}
+                </span>
+              </td>
               <td class="py-3 pr-4">
                 <span :class="accessClass(m.access)" class="px-2 py-0.5 rounded text-xs font-medium">
                   {{ m.access }}
@@ -111,6 +126,13 @@ const CLOUDFRONT_URL = import.meta.env.VITE_API_URL ?? 'https://d3l3tyeyzgmm47.c
 const ACCESS_OPTIONS = [
   { key: 'api-only', label: 'API only' },
   { key: 'both',     label: 'Open weight' },
+]
+
+const CATEGORY_OPTIONS = [
+  { key: 'general',      label: 'General' },
+  { key: 'general/code', label: 'General · Code' },
+  { key: 'local',        label: 'Local' },
+  { key: 'local/code',   label: 'Local · Code' },
 ]
 
 const HELP_FIELDS = [
@@ -168,9 +190,11 @@ const modalities = ref([])
 const selectedProviders = ref(new Set())
 const selectedModalities = ref(new Set())
 const selectedAccess = ref(null)
+const selectedCategory = ref(null)
 
 const hasActiveFilters = computed(() =>
   selectedAccess.value !== null ||
+  selectedCategory.value !== null ||
   selectedModalities.value.size > 0 ||
   selectedProviders.value.size < providers.value.length
 )
@@ -179,6 +203,7 @@ const filteredModels = computed(() =>
   models.value.filter(m => {
     if (!selectedProviders.value.has(m.provider)) return false
     if (selectedAccess.value && m.access !== selectedAccess.value) return false
+    if (selectedCategory.value && m.category !== selectedCategory.value) return false
     if (selectedModalities.value.size > 0) {
       const mods = m.modalities ?? []
       if (![...selectedModalities.value].every(mod => mods.includes(mod))) return false
@@ -220,6 +245,7 @@ function clearFilters() {
   selectedProviders.value = new Set(providers.value)
   selectedModalities.value = new Set()
   selectedAccess.value = null
+  selectedCategory.value = null
 }
 
 function formatContext(n) {
@@ -244,6 +270,15 @@ function accessClass(access) {
     'open-weight': 'bg-green-900/50 text-green-300',
     'both':        'bg-blue-900/50 text-blue-300',
   }[access] ?? 'bg-gray-800 text-gray-300'
+}
+
+function categoryClass(cat) {
+  return {
+    'general':      'bg-gray-800 text-gray-300',
+    'general/code': 'bg-orange-900/40 text-orange-300',
+    'local':        'bg-green-900/40 text-green-300',
+    'local/code':   'bg-teal-900/40 text-teal-300',
+  }[cat] ?? 'bg-gray-800 text-gray-400'
 }
 
 function formatLicense(l) {

@@ -37,7 +37,9 @@
 
       <!-- Price Trends -->
       <section class="mb-10">
-        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Price Trends</h2>
+        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Price Trends
+          <span class="text-gray-600 font-normal normal-case tracking-normal ml-2">(last 30 days)</span>
+        </h2>
         <div v-if="priceTrendEntries.length === 0" class="text-xs text-gray-600 py-4">
           No price changes detected yet. Data accumulates over time.
         </div>
@@ -60,6 +62,11 @@
               </div>
             </div>
           </div>
+          <button v-if="!showAllTrends && Object.keys(data?.price_trends ?? {}).length > 10"
+            @click="showAllTrends = true"
+            class="text-xs text-gray-500 hover:text-gray-300 mt-2">
+            Show all models ↓
+          </button>
         </div>
       </section>
 
@@ -140,7 +147,16 @@ onMounted(async () => {
 const meta = computed(() => data.value?._meta)
 const hypeIndex = computed(() => data.value?.hype_index ?? [])
 const breakeven = computed(() => data.value?.breakeven ?? [])
-const priceTrendEntries = computed(() => Object.entries(data.value?.price_trends ?? {}))
+const PRICE_TREND_LIMIT = 5
+const showAllTrends = ref(false)
+
+const priceTrendEntries = computed(() => {
+  const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const entries = Object.entries(data.value?.price_trends ?? {})
+    .map(([model, changes]) => [model, changes.filter(c => c.date >= cutoff).slice(0, PRICE_TREND_LIMIT)])
+    .filter(([, changes]) => changes.length > 0)
+  return showAllTrends.value ? entries : entries.slice(0, 10)
+})
 
 const maxHype = computed(() => Math.max(...hypeIndex.value.map(m => m.hype_score), 1))
 

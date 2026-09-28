@@ -38,54 +38,61 @@
         </div>
       </div>
 
-      <!-- Filters -->
-      <div class="mb-4 flex flex-wrap gap-3 items-center">
-        <!-- Provider filter -->
-        <div class="flex flex-wrap gap-1.5">
-          <button
-            v-for="pid in mainProviders" :key="pid"
-            @click="toggleProvider(pid)"
-            :class="selectedProviders.has(pid)
-              ? 'bg-white text-gray-900'
-              : 'bg-gray-800 text-gray-400 hover:text-white'"
-            class="px-2.5 py-1 rounded text-xs font-medium transition-colors"
-          >
-            {{ pid }}
-          </button>
+      <!-- Search + Filters -->
+      <div class="mb-4 space-y-3">
+        <!-- Search -->
+        <input v-model="search" type="text" placeholder="Search model or provider..."
+          class="w-full sm:w-80 bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white focus:outline-none focus:border-gray-500" />
+
+        <div class="flex flex-wrap gap-3 items-center">
+          <!-- Provider filter -->
+          <div class="flex flex-wrap gap-1.5">
+            <button
+              v-for="pid in mainProviders" :key="pid"
+              @click="toggleProvider(pid)"
+              :class="selectedProviders.has(pid) ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
+              class="px-2.5 py-1 rounded text-xs font-medium transition-colors"
+            >
+              {{ pid }}
+            </button>
+            <button @click="toggleOthers()"
+              :class="showOthers ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
+              class="px-2.5 py-1 rounded text-xs font-medium transition-colors">
+              others ({{ otherProviders.length }})
+            </button>
+          </div>
+
+          <div class="h-4 w-px bg-gray-700" />
+
+          <!-- Price type -->
+          <div class="flex gap-1.5">
+            <button v-for="t in priceTypes" :key="t.key"
+              @click="priceType = t.key; page = 1"
+              :class="priceType === t.key ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
+              class="px-2.5 py-1 rounded text-xs font-medium transition-colors">
+              {{ t.label }}
+            </button>
+          </div>
+
+          <div class="h-4 w-px bg-gray-700" />
+
+          <!-- Sort -->
+          <div class="flex gap-1.5">
+            <button v-for="s in activeSortOptions" :key="s.key"
+              @click="sortBy = s.key"
+              :class="sortBy === s.key ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
+              class="px-2.5 py-1 rounded text-xs font-medium transition-colors">
+              {{ s.label }}
+            </button>
+          </div>
+
+          <div class="h-4 w-px bg-gray-700" />
+
+          <!-- Group by family -->
+          <button @click="groupByFamily = !groupByFamily; page = 1"
+            :class="groupByFamily ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
+            class="px-2.5 py-1 rounded text-xs font-medium transition-colors">Group by family</button>
         </div>
-
-        <div class="h-4 w-px bg-gray-700" />
-
-        <!-- Price type -->
-        <div class="flex gap-1.5">
-          <button v-for="t in priceTypes" :key="t.key"
-            @click="priceType = t.key"
-            :class="priceType === t.key ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
-            class="px-2.5 py-1 rounded text-xs font-medium transition-colors"
-          >
-            {{ t.label }}
-          </button>
-        </div>
-
-        <div class="h-4 w-px bg-gray-700" />
-
-        <!-- Sort -->
-        <div class="flex gap-1.5">
-          <button v-for="s in activeSortOptions" :key="s.key"
-            @click="sortBy = s.key"
-            :class="sortBy === s.key ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
-            class="px-2.5 py-1 rounded text-xs font-medium transition-colors"
-          >
-            {{ s.label }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Group by family toggle -->
-      <div class="mb-3 flex items-center gap-2">
-        <button @click="groupByFamily = !groupByFamily"
-          :class="groupByFamily ? 'bg-white text-gray-900' : 'bg-gray-800 text-gray-400 hover:text-white'"
-          class="px-2.5 py-1 rounded text-xs font-medium transition-colors">Group by family</button>
       </div>
 
       <!-- Table -->
@@ -95,10 +102,11 @@
             <tr class="border-b border-gray-800 text-left text-xs text-gray-500 uppercase tracking-wider">
               <th class="pb-3 pr-4">Model</th>
               <th class="pb-3 pr-4">Provider</th>
+              <th class="pb-3 pr-3 text-right">Context</th>
               <th class="pb-3 pr-4 text-right">Input /1M</th>
               <th class="pb-3 pr-4 text-right">Output /1M</th>
               <th class="pb-3 pr-4 text-right">Cached /1M</th>
-              <th class="pb-3 text-right" :class="calcActive ? 'pr-4' : ''">Batch Input /1M</th>
+              <th class="pb-3 text-right" :class="calcActive ? 'pr-4' : ''">Batch /1M</th>
               <th v-if="calcActive" class="pb-3 text-right text-yellow-400">Est. cost/mo</th>
             </tr>
           </thead>
@@ -106,7 +114,7 @@
             <template v-if="groupByFamily">
               <template v-for="(group, family) in groupedModels" :key="family">
                 <tr class="border-t border-gray-700">
-                  <td colspan="7" class="pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <td colspan="8" class="pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     {{ family }}
                     <span class="ml-2 text-gray-600 font-normal normal-case">{{ group.length }} models</span>
                   </td>
@@ -114,6 +122,7 @@
                 <tr v-for="m in group" :key="`${m.provider}-${m.id}`" class="hover:bg-gray-900/50 transition-colors">
                   <td class="py-2 pr-4 pl-3 text-white">{{ m.id }}</td>
                   <td class="py-2 pr-4 text-xs text-gray-400">{{ m.provider }}</td>
+                  <td class="py-2 pr-3 text-right text-xs text-gray-600 font-mono">{{ fmtCtx(m.context_length) }}</td>
                   <td class="py-2 pr-4 text-right font-mono"><span :class="priceColor(m.pricing.standard.input_per_1m)">{{ fmt(m.pricing.standard.input_per_1m) }}</span></td>
                   <td class="py-2 pr-4 text-right font-mono"><span :class="priceColor(m.pricing.standard.output_per_1m)">{{ fmt(m.pricing.standard.output_per_1m) }}</span></td>
                   <td class="py-2 pr-4 text-right font-mono text-gray-500">{{ fmt(m.pricing.cached_input_per_1m) }}</td>
@@ -123,9 +132,10 @@
               </template>
             </template>
             <template v-else>
-              <tr v-for="m in filteredModels" :key="`${m.provider}-${m.id}`" class="hover:bg-gray-900/50 transition-colors border-b border-gray-800/50">
+              <tr v-for="m in paginatedModels" :key="`${m.provider}-${m.id}`" class="hover:bg-gray-900/50 transition-colors border-b border-gray-800/50">
                 <td class="py-2.5 pr-4 text-white">{{ m.id }}</td>
                 <td class="py-2.5 pr-4 text-xs text-gray-400">{{ m.provider }}</td>
+                <td class="py-2.5 pr-3 text-right text-xs text-gray-600 font-mono">{{ fmtCtx(m.context_length) }}</td>
                 <td class="py-2.5 pr-4 text-right font-mono"><span :class="priceColor(m.pricing.standard.input_per_1m)">{{ fmt(m.pricing.standard.input_per_1m) }}</span></td>
                 <td class="py-2.5 pr-4 text-right font-mono"><span :class="priceColor(m.pricing.standard.output_per_1m)">{{ fmt(m.pricing.standard.output_per_1m) }}</span></td>
                 <td class="py-2.5 pr-4 text-right font-mono text-gray-500">{{ fmt(m.pricing.cached_input_per_1m) }}</td>
@@ -135,6 +145,19 @@
             </template>
           </tbody>
         </table>
+      </div>
+
+      <!-- Pagination -->
+      <div v-if="!groupByFamily && totalPages > 1" class="flex items-center justify-center gap-3 mt-6">
+        <button @click="page--" :disabled="page === 1"
+          class="px-3 py-1.5 rounded text-xs bg-gray-800 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">
+          ← Prev
+        </button>
+        <span class="text-xs text-gray-500">{{ page }} / {{ totalPages }} · {{ filteredModels.length }} models</span>
+        <button @click="page++" :disabled="page === totalPages"
+          class="px-3 py-1.5 rounded text-xs bg-gray-800 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">
+          Next →
+        </button>
       </div>
     </template>
   </div>
@@ -163,6 +186,12 @@ const lastUpdated = ref(null)
 const MAIN_PROVIDERS = ['openai', 'anthropic', 'google', 'mistralai', 'deepseek', 'groq', 'bedrock', 'together-ai', 'cohere', 'x-ai']
 const mainProviders = ref(MAIN_PROVIDERS)
 const selectedProviders = ref(new Set(MAIN_PROVIDERS))
+const showOthers = ref(false)
+const otherProviders = ref([])
+
+const page = ref(1)
+const PAGE_SIZE = 50
+const search = ref('')
 
 const priceType = ref('all')
 const priceTypes = [
@@ -195,13 +224,16 @@ onMounted(async () => {
 
     // Flatten providers → models, skip ~ variants
     const flat = []
+    const others = []
     for (const p of data.providers) {
       if (p.id.startsWith('~')) continue
       for (const m of p.models) {
         flat.push({ ...m, provider: p.id })
       }
+      if (!MAIN_PROVIDERS.includes(p.id)) others.push(p.id)
     }
     allModels.value = flat
+    otherProviders.value = others
   } catch (e) {
     error.value = `Failed to load pricing: ${e.message}`
   } finally {
@@ -213,10 +245,29 @@ function toggleProvider(pid) {
   const s = new Set(selectedProviders.value)
   s.has(pid) ? s.delete(pid) : s.add(pid)
   selectedProviders.value = s
+  page.value = 1
+}
+
+function toggleOthers() {
+  const s = new Set(selectedProviders.value)
+  if (showOthers.value) {
+    otherProviders.value.forEach(p => s.delete(p))
+    showOthers.value = false
+  } else {
+    otherProviders.value.forEach(p => s.add(p))
+    showOthers.value = true
+  }
+  selectedProviders.value = s
+  page.value = 1
 }
 
 const filteredModels = computed(() => {
   let list = allModels.value.filter(m => selectedProviders.value.has(m.provider))
+
+  if (search.value.trim()) {
+    const q = search.value.trim().toLowerCase()
+    list = list.filter(m => m.id.toLowerCase().includes(q) || m.provider.toLowerCase().includes(q))
+  }
 
   if (priceType.value === 'cached') {
     list = list.filter(m => m.pricing.cached_input_per_1m != null)
@@ -234,10 +285,23 @@ const filteredModels = computed(() => {
   return list
 })
 
+const totalPages = computed(() => Math.ceil(filteredModels.value.length / PAGE_SIZE))
+const paginatedModels = computed(() => {
+  const start = (page.value - 1) * PAGE_SIZE
+  return filteredModels.value.slice(start, start + PAGE_SIZE)
+})
+
 function fmt(val) {
   if (val == null) return '—'
   if (val === 0) return 'free'
   return `$${val.toFixed(4)}`
+}
+
+function fmtCtx(val) {
+  if (!val) return '—'
+  if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(0)}M`
+  if (val >= 1_000) return `${(val / 1_000).toFixed(0)}K`
+  return val
 }
 
 const groupByFamily = ref(false)
